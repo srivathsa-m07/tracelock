@@ -1,0 +1,165 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: backdrop-in 0.18s ease;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 40px 100px rgba(15, 23, 42, 0.2);
+  padding: 32px;
+  width: 100%;
+  max-width: 520px;
+  animation: modal-in 0.22s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.modal-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: var(--text-soft);
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.modal-close:hover { background: var(--surface-strong); color: var(--text); }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 48px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  background: var(--surface-soft);
+}
+
+.drop-zone:hover,
+.drop-zone-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.drop-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.drop-primary {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.drop-secondary {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+
+/* Progress */
+.upload-progress-area {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.upload-filename {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.progress-label {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+
+/* Result states */
+.upload-result {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.result-icon {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.upload-success .result-icon { color: #14604a; }
+.upload-error .result-icon { color: #b80d57; }
+
+.result-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.result-sub {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+.retry-btn {
+  margin-top: 20px;
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

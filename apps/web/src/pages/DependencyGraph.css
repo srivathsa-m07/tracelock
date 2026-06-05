@@ -1,0 +1,14 @@
+.graph-page { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.graph-toolbar { display:flex; justify-content:space-between; align-items:center; }
+.graph-content { display:flex; gap:12px; height: calc(100vh - 160px); }
+.graph-canvas { flex:1; background: #fff; border: 1px solid #e6eef8; border-radius: 6px; min-height: 480px; height: 100%; }
+.graph-sidebar { width: 300px; max-width: 40%; background: #fbfcfd; border: 1px solid #e6eef8; padding:12px; border-radius:6px; overflow:auto; }
+.graph-stats { display:flex; gap:8px; margin-bottom:8px; }
+.stat-card { flex:1; background:#fff; border:1px solid #e6eef8; padding:8px; border-radius:6px; text-align:center; }
+.legend { margin-top:8px; padding:8px; background:#fff; border:1px solid #e6eef8; border-radius:6px; }
+.priority-card { margin-bottom:8px; padding:8px; border-radius:4px; }
+@media (max-width: 800px) {
+  .graph-content { flex-direction: column; height: auto; }
+  .graph-sidebar { width: 100%; max-width: none; }
+}
+

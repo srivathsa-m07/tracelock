@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Scan model: represents a single package.json scan
+model Repository {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  scans       Scan[]
+
+  @@map("repositories")
+}
+
+model Scan {
+  id                     String         @id @default(cuid())
+  createdAt              DateTime       @default(now())
+  totalDependencies      Int
+  totalDevDependencies   Int
+  dependencies           Dependency[]
+  // Aggregate risk summary (stored for quick querying)
+  averageRisk            Int?
+  maxRisk                Int?
+  riskLevel              String?
+
+  // Repository association
+  repositoryId           String?
+  repository             Repository?    @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@map("scans")
+}
+
+// Dependency model: represents individual dependencies from a scan
+model Dependency {
+  id     String @id @default(cuid())
+  name   String
+  version String
+  type   String // "dependency" or "devDependency"
+  
+  // Foreign key relation to Scan
+  scanId String
+  scan   Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  
+  // Edges where this dependency is the parent (depends on child)
+  parentEdges DependencyEdge[] @relation("parent_edges")
+
+  // Edges where this dependency is the child (is depended on by parent)
+  childEdges DependencyEdge[] @relation("child_edges")
+
+  // Vulnerabilities found for this dependency
+  vulnerabilities DependencyVulnerability[]
+
+  // Risk fields (calculated by risk engine)
+  // Use Float to preserve fractional scores from the risk engine
+  riskScore Float?
+  riskLevel String?
+
+  @@map("dependencies")
+}
+
+
+// DependencyEdge: normalized join table modeling directed edges in the dependency graph
+// - parentId -> childId represents "parent depends on child"
+// - depth indicates the distance (1 = direct dependency). Depth is useful for later
+//   transitive analysis without recomputing path lengths immediately.
+// This structure keeps the graph normalized and scalable, and avoids recursion
+// within the Dependency table itself. Future features (transitive closure, path
+// queries) can build on this edge table efficiently.
+model DependencyEdge {
+  id       String     @id @default(cuid())
+
+  parentId String
+  parent   Dependency @relation("parent_edges", fields: [parentId], references: [id], onDelete: Cascade)
+
+  childId  String
+  child    Dependency @relation("child_edges", fields: [childId], references: [id], onDelete: Cascade)
+
+  // Depth of the edge: 1 == direct dependency, >1 used for aggregated/transitive records
+  depth    Int        @default(1)
+
+  @@map("dependency_edges")
+  @@unique([parentId, childId])
+}
+
+// Vulnerability: a single advisory record sourced from OSV.dev
+model Vulnerability {
+  id           String   @id // OSV ID e.g. GHSA-xxxx or CVE-xxxx
+  summary      String?
+  details      String?
+  severity     String?  // CRITICAL | HIGH | MEDIUM | LOW
+  cvssScore    Float?
+  aliases      String[] // CVE IDs, GHSA IDs etc.
+  affectedVersions String[]
+  fixedVersions    String[]
+  publishedAt  DateTime?
+  modifiedAt   DateTime?
+
+  dependencies DependencyVulnerability[]
+
+  @@map("vulnerabilities")
+}
+
+// DependencyVulnerability: join table linking a dependency to its vulnerabilities
+model DependencyVulnerability {
+  id              String        @id @default(cuid())
+  dependencyId    String
+  dependency      Dependency    @relation(fields: [dependencyId], references: [id], onDelete: Cascade)
+  vulnerabilityId String
+  vulnerability   Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+
+  @@unique([dependencyId, vulnerabilityId])
+  @@map("dependency_vulnerabilities")
+}

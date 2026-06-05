@@ -1,0 +1,12 @@
+{
+  "name": "tracelock-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:web": "cd apps/web && npm run dev",
+    "build:web": "cd apps/web && npm run build"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "prisma": "^7.8.0"
+  }
+}

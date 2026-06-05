@@ -1,0 +1,136 @@
+.app-root {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: linear-gradient(180deg, #f3f6fb 0%, #eef3fb 100%);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px 24px;
+  background: rgba(255, 255, 255, 0.86);
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.sidebar-brand {
+  display: grid;
+  gap: 10px;
+}
+
+.brand-logo {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #0f172a;
+}
+
+.brand-subtitle {
+  max-width: 220px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.nav-list {
+  display: grid;
+  gap: 10px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 16px;
+  color: #334155;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: rgba(55, 81, 255, 0.08);
+  color: #0f172a;
+}
+
+.sidebar-footer {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 28px 36px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-soft);
+}
+
+.topbar-label {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.topbar h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0;
+  max-width: 720px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (max-width: 1080px) {
+  .app-root {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    padding: 22px 18px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+}
