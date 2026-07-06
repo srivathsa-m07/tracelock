@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import Card from '../ui/Card';
+import Spinner from '../ui/Spinner';
+import EmptyState from '../ui/EmptyState';
 
 interface PropNode {
   id: string;
@@ -157,14 +159,14 @@ function AttackPathCard({ path, index }: { path: AttackPath; index: number }) {
                   <span className="chain-badge">VULNERABLE</span>
                 </div>
                 {path.upstreamChain.slice(0, 6).map((n) => (
-                  <React.Fragment key={n.id}>
+                  <Fragment key={n.id}>
                     <span className="ap-chain-arrow">→</span>
                     <div className="ap-chain-node">
                       <span className="chain-pkg">{n.name}</span>
                       <span className="chain-version">@{n.version}</span>
                       <span className="chain-depth-tag">d{n.depth}</span>
                     </div>
-                  </React.Fragment>
+                  </Fragment>
                 ))}
                 {path.upstreamChain.length > 6 && (
                   <span className="ap-chain-more">+{path.upstreamChain.length - 6} more</span>
@@ -217,67 +219,88 @@ export default function PropagationAnalysis() {
   const result: AnalysisResult | null = data ?? null;
 
   if (isLoading) {
-    return <div className="dashboard-status">Computing propagation analysis…</div>;
+    return (
+      <div className="page">
+        <div className="page-loading">
+          <Spinner size="lg" />
+          <p className="page-loading-text">Computing propagation analysis…</p>
+        </div>
+      </div>
+    );
   }
 
   const hasData = result && result.attackPaths.length > 0;
 
   return (
-    <div className="dashboard-page">
-      <section className="dashboard-summary">
-        <div className="summary-copy">
+    <div className="page">
+      <header className="page-header">
+        <div>
           <p className="eyebrow">Attack propagation</p>
-          <h2>Dependency attack path and blast radius analysis</h2>
-          <p>
+          <h1 className="page-title">Blast radius analysis</h1>
+          <p className="page-subtitle">
             BFS/DFS graph traversal over real dependency relationships combined with OSV advisory
             data. Every metric is computed — no estimates, no placeholders.
           </p>
         </div>
-        <div className="scan-detail-actions">
-          <Link to={`/scans/${scanId}`} className="button button-secondary">← Scan detail</Link>
+        <div className="page-actions">
+          <Link to={`/scans/${scanId}`} className="btn btn-secondary btn-sm">← Scan detail</Link>
         </div>
-      </section>
+      </header>
 
       {!hasData ? (
         <Card>
-          <div className="empty-state-block">
-            <p className="empty-state-title">No propagation data available</p>
-            <p className="empty-state-body">
-              No vulnerable dependencies were found in this scan. Upload a package.json with
-              known vulnerable packages to see attack path analysis.
-            </p>
-            <Link
-              to={`/scans/${scanId}`}
-              className="scan-link"
-              style={{ marginTop: 16, display: 'inline-block' }}
-            >
+          <EmptyState
+            Icon={
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            }
+            title="No propagation data available"
+            description="No vulnerable dependencies were found in this scan. Upload a package.json with known vulnerable packages to see attack path analysis."
+          />
+          <div style={{ textAlign: 'center', paddingBottom: 24 }}>
+            <Link to={`/scans/${scanId}`} className="btn btn-secondary btn-sm">
               ← Back to scan detail
             </Link>
           </div>
         </Card>
       ) : (
         <>
+          {/* ── KPI metrics ── */}
           <section className="metrics-grid">
-            <Card title="Vulnerable nodes" className="metric-card">
+            <Card className="metric-card">
+              <p className="metric-label">Vulnerable nodes</p>
               <p className="metric-value">{result.totalVulnerableNodes}</p>
-              <p className="metric-note">Packages with known advisories in this scan</p>
+              <p className="metric-note">Packages with known advisories</p>
             </Card>
-            <Card title="Total blast radius" className="metric-card">
+            <Card className="metric-card">
+              <p className="metric-label">Total blast radius</p>
               <p className="metric-value">{result.totalBlastRadius}</p>
-              <p className="metric-note">Unique packages reachable from vulnerable nodes</p>
+              <p className="metric-note">Unique downstream packages exposed</p>
             </Card>
-            <Card title="Max propagation score" className="metric-card">
+            <Card className="metric-card">
+              <p className="metric-label">Max propagation</p>
               <p className="metric-value">{result.maxPropagationScore}</p>
-              <p className="metric-note">Highest severity × exposure × amplification</p>
+              <p className="metric-note">Severity × exposure × amplification</p>
             </Card>
-            <Card title="Avg propagation score" className="metric-card">
+            <Card className="metric-card">
+              <p className="metric-label">Avg propagation</p>
               <p className="metric-value">{result.avgPropagationScore}</p>
-              <p className="metric-note">Mean propagation risk across all attack paths</p>
+              <p className="metric-note">Mean risk across all attack paths</p>
             </Card>
           </section>
 
+          {/* ── Top risk nodes + Insights ── */}
           <section className="dashboard-grid">
-            <Card title="Top risk nodes by propagation score">
+            <Card
+              title="Top risk nodes"
+              actions={
+                <span className="text-muted text-sm">
+                  {result.topRiskNodes.length} node{result.topRiskNodes.length !== 1 ? 's' : ''}
+                </span>
+              }
+              flush
+            >
               <div className="table-scroll">
                 <table className="data-table">
                   <thead>
@@ -292,8 +315,8 @@ export default function PropagationAnalysis() {
                   <tbody>
                     {result.topRiskNodes.map((node) => (
                       <tr key={node.id}>
-                        <td className="vuln-pkg-name">{node.name}</td>
-                        <td className="scan-id-cell">{node.version}</td>
+                        <td><span className="font-mono" style={{ fontWeight: 600 }}>{node.name}</span></td>
+                        <td className="font-mono text-muted">{node.version}</td>
                         <td>{node.vulnCount}</td>
                         <td>{node.blastRadius}</td>
                         <td style={{ minWidth: 160 }}>
@@ -306,7 +329,7 @@ export default function PropagationAnalysis() {
               </div>
             </Card>
 
-            <Card title="Propagation insights" className="insight-card">
+            <Card title="Propagation insights">
               <div className="insight-list">
                 <div className="insight-item">
                   <div className="insight-label">Attack paths identified</div>
@@ -342,7 +365,12 @@ export default function PropagationAnalysis() {
             </Card>
           </section>
 
-          <Card title={`Attack paths (${result.attackPaths.length})`}>
+          {/* ── Attack path cards ── */}
+          <section>
+            <div className="section-header">
+              <h2 className="section-title">Attack paths</h2>
+              <span className="tab-badge">{result.attackPaths.length}</span>
+            </div>
             <div className="ap-list">
               {result.attackPaths.map((path, i) => (
                 <AttackPathCard
@@ -352,7 +380,7 @@ export default function PropagationAnalysis() {
                 />
               ))}
             </div>
-          </Card>
+          </section>
         </>
       )}
     </div>

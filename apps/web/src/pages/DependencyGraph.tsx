@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 import api from '../services/api';
+import Spinner from '../ui/Spinner';
 import './DependencyGraph.css';
 
 export default function DependencyGraph() {
@@ -8,6 +9,8 @@ export default function DependencyGraph() {
   const cyRef = useRef<any>(null);
   const [selected, setSelected] = useState<any>(null);
   const [mode, setMode] = useState<'default'|'attack'|'propagation'>('default');
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ nodes: 0, vulnerable: 0, attackEdges: 0 });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -84,12 +87,13 @@ export default function DependencyGraph() {
         cy.center();
 
         // Attach attack paths highlighting
+        let attackEdgeCount = 0;
         if (attack && attack.length > 0) {
           (attack || []).forEach((path: string[]) => {
             for (let i = 0; i < path.length - 1; i++) {
               const edgeId = `${path[i]}-${path[i+1]}`;
               const e = cy.edges().filter((ed: any) => ed.data('id') === edgeId);
-              if (e && e.length > 0) e.addClass('attack-path');
+              if (e && e.length > 0) { e.addClass('attack-path'); attackEdgeCount++; }
             }
           });
         }
@@ -100,13 +104,22 @@ export default function DependencyGraph() {
         cy.userZoomingEnabled(true);
         cy.userPanningEnabled(true);
 
+        // Update stats
+        setStats({
+          nodes: cy.nodes().length,
+          vulnerable: cy.nodes().filter((n: any) => n.data('vulnCount') > 0).length,
+          attackEdges: attackEdgeCount,
+        });
+
+        setLoading(false);
+
         // ensure canvas resizes when container size changes
         const ro = new ResizeObserver(() => cy.resize());
         if (containerRef.current) ro.observe(containerRef.current);
         // cleanup observer on unmount
         (cy as any)._ro = ro;
       })
-      .catch((e) => console.error('Failed to load graph', e));
+      .catch((e) => { console.error('Failed to load graph', e); setLoading(false); });
 
     return () => { mounted = false; if (cyRef.current) cyRef.current.destroy(); };
   }, []);
@@ -124,65 +137,121 @@ export default function DependencyGraph() {
 
   return (
     <div className="graph-page">
-      <div className="graph-toolbar">
+      {/* ── Page header ── */}
+      <header className="page-header">
         <div>
-          <button className={`button ${mode==='default'?'button-primary':''}`} onClick={() => setMode('default')}>Default</button>
-          <button className={`button ${mode==='attack'?'button-primary':''}`} onClick={() => setMode('attack')}>Attack paths</button>
-          <button className={`button ${mode==='propagation'?'button-primary':''}`} onClick={() => setMode('propagation')}>Propagation</button>
+          <p className="eyebrow">Dependency graph</p>
+          <h1 className="page-title">Interactive dependency visualization</h1>
         </div>
-        <div>
-          <button className="button" onClick={() => cyRef.current?.reset()}>Reset view</button>
-          <button className="button" onClick={() => cyRef.current?.fit()}>Fit</button>
+      </header>
+
+      {/* ── Toolbar ── */}
+      <div className="graph-toolbar">
+        <div className="graph-toolbar-group">
+          <button className={`btn btn-sm ${mode==='default'?'btn-primary':'btn-secondary'}`} onClick={() => setMode('default')}>Default</button>
+          <button className={`btn btn-sm ${mode==='attack'?'btn-primary':'btn-secondary'}`} onClick={() => setMode('attack')}>Attack paths</button>
+          <button className={`btn btn-sm ${mode==='propagation'?'btn-primary':'btn-secondary'}`} onClick={() => setMode('propagation')}>Propagation</button>
+        </div>
+        <div className="graph-toolbar-group">
+          <button className="btn btn-secondary btn-sm" onClick={() => cyRef.current?.reset()}>Reset view</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => cyRef.current?.fit()}>Fit</button>
         </div>
       </div>
 
+      {/* ── Stats bar ── */}
+      <div className="graph-stats">
+        <div className="stat-card">
+          <div className="stat-value">{stats.nodes}</div>
+          <div className="stat-label">Dependencies</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{stats.vulnerable}</div>
+          <div className="stat-label">Vulnerable</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{stats.attackEdges}</div>
+          <div className="stat-label">Attack edges</div>
+        </div>
+      </div>
+
+      {/* ── Main content ── */}
       <div className="graph-content">
-        <div style={{flex:'1 1 0', display:'flex', flexDirection:'column'}}>
-          <div className="graph-stats">
-            <div className="stat-card">
-              <div className="stat-value">{cyRef.current?.nodes()?.length ?? 0}</div>
-              <div className="stat-label">Dependencies</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{cyRef.current?.nodes().filter((n:any)=>n.data('vulnCount')>0).length ?? 0}</div>
-              <div className="stat-label">Vulnerable</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{cyRef.current?.edges().filter((e:any)=>e.hasClass('attack-path')).length ?? 0}</div>
-              <div className="stat-label">Attack paths</div>
-            </div>
+        <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div ref={containerRef} className="graph-canvas">
+            {loading && (
+              <div className="graph-loading">
+                <Spinner size="lg" />
+                <p className="page-loading-text">Loading dependency graph…</p>
+              </div>
+            )}
           </div>
-          <div ref={containerRef} className="graph-canvas" />
+
+          {/* ── Legend ── */}
           <div className="legend">
-            <strong>Legend</strong>
-            <div style={{display:'flex', gap:8, marginTop:8}}>
-              <div style={{display:'flex',gap:6,alignItems:'center'}}><span style={{width:12,height:12,background:'#d64545',display:'inline-block',borderRadius:3}}></span> CRITICAL</div>
-              <div style={{display:'flex',gap:6,alignItems:'center'}}><span style={{width:12,height:12,background:'#f39c12',display:'inline-block',borderRadius:3}}></span> HIGH</div>
-              <div style={{display:'flex',gap:6,alignItems:'center'}}><span style={{width:12,height:12,background:'#f1c40f',display:'inline-block',borderRadius:3}}></span> MEDIUM</div>
-              <div style={{display:'flex',gap:6,alignItems:'center'}}><span style={{width:12,height:12,background:'#2ecc71',display:'inline-block',borderRadius:3}}></span> LOW</div>
+            <div className="legend-title">Legend</div>
+            <div className="legend-items" style={{ flexDirection: 'row', gap: '16px', flexWrap: 'wrap' }}>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ background: '#d64545' }}></span>
+                Critical
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ background: '#f39c12' }}></span>
+                High
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ background: '#f1c40f' }}></span>
+                Medium
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ background: '#2ecc71' }}></span>
+                Low
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot" style={{ background: '#e6eef8' }}></span>
+                No risk
+              </div>
             </div>
           </div>
         </div>
+
+        {/* ── Sidebar ── */}
         <aside className="graph-sidebar">
-          <div style={{maxHeight:'70vh',overflow:'auto'}}>
           {selected ? (
-            <div>
-              <h3>{selected.name}@{selected.version}</h3>
-              <p>Risk level: <strong>{selected.riskLevel ?? 'UNKNOWN'}</strong></p>
-              <p>Vulnerabilities: {selected.vulnCount ?? 0}</p>
-              <hr />
+            <div className="graph-node-detail">
+              <p className="eyebrow">Selected package</p>
+              <div className="graph-node-name">
+                {selected.name}<span className="text-muted" style={{ fontWeight: 400 }}>@{selected.version}</span>
+              </div>
+
+              <div className="graph-node-meta">
+                <div className="graph-node-meta-row">
+                  <span className="graph-node-meta-label">Risk level</span>
+                  <span className="graph-node-meta-value">
+                    {selected.riskLevel
+                      ? <span className={`pill pill-${selected.riskLevel.toLowerCase()}`}>{selected.riskLevel}</span>
+                      : <span className="text-faint">UNKNOWN</span>}
+                  </span>
+                </div>
+                <div className="graph-node-meta-row">
+                  <span className="graph-node-meta-label">Vulnerabilities</span>
+                  <span className="graph-node-meta-value">{selected.vulnCount ?? 0}</span>
+                </div>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '8px 0' }} />
+
               <div>
-                <h4>Priority</h4>
-                <p>Priority score and recommended action are available in the Scan detail page.</p>
+                <p className="eyebrow">Priority</p>
+                <p className="text-muted text-sm">Priority score and recommended action are available in the Scan detail page.</p>
               </div>
             </div>
           ) : (
             <div>
-              <h3>Inspector</h3>
-              <p>Select a node to see package details, vulnerabilities and recommendations.</p>
+              <p className="eyebrow">Inspector</p>
+              <p className="graph-sidebar-title" style={{ marginBottom: 8 }}>Node details</p>
+              <p className="graph-sidebar-empty">Select a node in the graph to see package details, vulnerabilities and recommendations.</p>
             </div>
           )}
-          </div>
         </aside>
       </div>
     </div>

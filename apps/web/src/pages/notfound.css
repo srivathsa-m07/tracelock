@@ -1,0 +1,116 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Not Found — 404 Page
+   ═══════════════════════════════════════════════════════════════════ */
+
+.notfound-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  background: #0B0F1A;
+  font-family: var(--font-sans);
+  position: relative;
+  overflow: hidden;
+}
+
+.notfound-page::before {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(59, 91, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.notfound-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.notfound-code {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 12vw, 8rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: 16px;
+  user-select: none;
+}
+
+.notfound-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+.notfound-desc {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.4);
+  max-width: 400px;
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+.notfound-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.notfound-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+  height: 46px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all var(--transition);
+  box-shadow: 0 0 24px rgba(59, 91, 255, 0.25);
+}
+
+.notfound-btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 36px rgba(59, 91, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.notfound-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all var(--transition);
+}
+
+.notfound-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+}

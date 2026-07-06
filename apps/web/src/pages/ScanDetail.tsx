@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import Card from '../ui/Card';
+import Spinner from '../ui/Spinner';
+import EmptyState from '../ui/EmptyState';
 
 interface Vulnerability {
   id: string;
@@ -92,8 +94,27 @@ export default function ScanDetail() {
     { enabled: !!scanId }
   );
 
-  if (scanLoading) return <div className="dashboard-status">Loading scan details…</div>;
-  if (!scanData) return <div className="dashboard-status">Scan not found.</div>;
+  if (scanLoading) {
+    return (
+      <div className="page">
+        <div className="dashboard-status">
+          <Spinner size="lg" />
+          <p className="text-muted">Loading scan details…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scanData) {
+    return (
+      <div className="page">
+        <EmptyState
+          title="Scan not found"
+          description="The requested scan could not be located. It may have been deleted or the ID is invalid."
+        />
+      </div>
+    );
+  }
 
   const scan = scanData.scan;
   const deps: any[] = (scanData.dependencies ?? []).filter((d: any) => !d.name.startsWith('__root__'));
@@ -124,99 +145,166 @@ export default function ScanDetail() {
   const shortId = scan.id.slice(-8);
 
   return (
-    <div className="dashboard-page">
-      <section className="dashboard-summary">
-        <div className="summary-copy">
+    <div className="page">
+      {/* ── Page header ── */}
+      <header className="page-header">
+        <div>
           <p className="eyebrow">Scan detail</p>
-          <h2>Vulnerability intelligence report</h2>
-          <p>
-            Advisory data from <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" className="scan-link">OSV.dev</a>
-            {' '}· Scan <span className="scan-id-inline">…{shortId}</span>
-            {' '}· {new Date(scan.createdAt).toLocaleString()}
+          <h1 className="page-title">Vulnerability intelligence report</h1>
+          <p className="page-subtitle">
+            Advisory data from{' '}
+            <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" className="scan-link">OSV.dev</a>
+            {' · '}Scan <span className="scan-id-inline font-mono">…{shortId}</span>
+            {' · '}{new Date(scan.createdAt).toLocaleString()}
           </p>
         </div>
-        <div className="scan-detail-actions">
-          <Link to={`/scans/${scan.id}/propagation`} className="button button-secondary">Attack paths</Link>
-          <Link to={`/scans/${scan.id}/dependency-tree`} className="button button-secondary">Dep. tree</Link>
-          <Link to={`/scans/${scan.id}/graph`} className="button button-secondary">Graph</Link>
-          <button className="button button-secondary" onClick={() => handleExport('cyclonedx')}>SBOM ↓</button>
+        <div className="page-actions">
+          <Link to={`/scans/${scan.id}/propagation`} className="btn btn-secondary btn-sm">Attack paths</Link>
+          <Link to={`/scans/${scan.id}/dependency-tree`} className="btn btn-secondary btn-sm">Dep. tree</Link>
+          <Link to={`/scans/${scan.id}/graph`} className="btn btn-secondary btn-sm">Graph</Link>
+          <button className="btn btn-primary btn-sm" onClick={() => handleExport('cyclonedx')}>Export SBOM</button>
         </div>
-      </section>
+      </header>
 
+      {/* ── Metrics ── */}
       <section className="metrics-grid">
-        <Card title="Total vulnerabilities" className="metric-card">
-          <p className="metric-value">{vulnLoading ? '…' : totalVulns}</p>
+        <Card className="metric-card">
+          <p className="metric-label">Total vulnerabilities</p>
+          <p className="metric-value">{vulnLoading ? <Spinner size="sm" /> : totalVulns}</p>
           <p className="metric-note">Advisories matched via OSV.dev</p>
         </Card>
-        <Card title="Affected packages" className="metric-card">
-          <p className="metric-value">{vulnLoading ? '…' : affectedDeps}</p>
+        <Card className="metric-card">
+          <p className="metric-label">Affected packages</p>
+          <p className="metric-value">{vulnLoading ? <Spinner size="sm" /> : affectedDeps}</p>
           <p className="metric-note">Packages with at least one advisory</p>
         </Card>
-        <Card title="Critical / High" className="metric-card">
-          <p className="metric-value">{vulnLoading ? '…' : `${sevCounts.CRITICAL} / ${sevCounts.HIGH}`}</p>
+        <Card className="metric-card">
+          <p className="metric-label">Critical / High</p>
+          <p className="metric-value">{vulnLoading ? <Spinner size="sm" /> : `${sevCounts.CRITICAL} / ${sevCounts.HIGH}`}</p>
           <p className="metric-note">Highest-severity findings</p>
         </Card>
-        <Card title="Dependencies" className="metric-card">
+        <Card className="metric-card">
+          <p className="metric-label">Dependencies</p>
           <p className="metric-value">{scan.totalDependencies}</p>
           <p className="metric-note">{scan.totalDevDependencies} dev · {scan.totalDependencies - scan.totalDevDependencies} prod</p>
         </Card>
       </section>
 
-      <Card title="Vulnerability findings">
-        {vulnLoading ? (
-          <div className="empty-state">Fetching OSV advisory data…</div>
-        ) : vulnGroups.length === 0 ? (
-          <div className="empty-state-block">
-            <p className="empty-state-title">No vulnerabilities found</p>
-            <p className="empty-state-body">No known advisories matched the dependencies in this scan via OSV.dev.</p>
-          </div>
-        ) : (
-          <div className="vuln-findings">
-            {vulnGroups.map((group) => (
-              <div key={group.dependency.id} className="vuln-dep-group">
-                <div className="vuln-dep-header">
-                  <div className="vuln-dep-name">
-                    <span className="vuln-pkg-name">{group.dependency.name}</span>
-                    <span className="vuln-pkg-version">@{group.dependency.version}</span>
-                    <span className={`pill pill-${group.dependency.type === 'devDependency' ? 'medium' : 'low'} pill-type`}>
-                      {group.dependency.type === 'devDependency' ? 'dev' : 'prod'}
-                    </span>
-                  </div>
-                  <div className="vuln-dep-count">{group.vulnerabilities.length} advisor{group.vulnerabilities.length === 1 ? 'y' : 'ies'}</div>
-                </div>
-                <div className="vuln-list">
-                  {group.vulnerabilities.map((v) => <VulnCard key={v.id} vuln={v} />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+      {/* ── Severity breakdown ── */}
+      {!vulnLoading && totalVulns > 0 && (
+        <section className="metrics-grid">
+          <Card className="metric-card">
+            <p className="metric-label">Critical</p>
+            <p className="metric-value"><span className="pill pill-critical">{sevCounts.CRITICAL}</span></p>
+          </Card>
+          <Card className="metric-card">
+            <p className="metric-label">High</p>
+            <p className="metric-value"><span className="pill pill-high">{sevCounts.HIGH}</span></p>
+          </Card>
+          <Card className="metric-card">
+            <p className="metric-label">Medium</p>
+            <p className="metric-value"><span className="pill pill-medium">{sevCounts.MEDIUM}</span></p>
+          </Card>
+          <Card className="metric-card">
+            <p className="metric-label">Low</p>
+            <p className="metric-value"><span className="pill pill-low">{sevCounts.LOW}</span></p>
+          </Card>
+        </section>
+      )}
 
-      <Card title={`All dependencies (${deps.length})`}>
-        {deps.length === 0 ? (
-          <div className="empty-state">No dependencies recorded for this scan.</div>
+      {/* ── Vulnerability findings ── */}
+      <section>
+        <div className="section-header">
+          <h2 className="section-title">Vulnerability findings</h2>
+          {!vulnLoading && <span className="tab-badge">{totalVulns}</span>}
+        </div>
+
+        {vulnLoading ? (
+          <Card>
+            <div className="dashboard-status">
+              <Spinner size="md" />
+              <p className="text-muted">Fetching OSV advisory data…</p>
+            </div>
+          </Card>
+        ) : vulnGroups.length === 0 ? (
+          <Card>
+            <EmptyState
+              title="No vulnerabilities found"
+              description="No known advisories matched the dependencies in this scan via OSV.dev."
+            />
+          </Card>
         ) : (
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr><th>Package</th><th>Version</th><th>Type</th><th>Risk</th><th>Score</th></tr>
-              </thead>
-              <tbody>
-                {deps.map((d: any) => (
-                  <tr key={d.id}>
-                    <td className="vuln-pkg-name">{d.name}</td>
-                    <td className="scan-id-cell">{d.version}</td>
-                    <td><span className={`pill pill-${d.type === 'devDependency' ? 'medium' : 'low'} pill-type`}>{d.type === 'devDependency' ? 'dev' : 'prod'}</span></td>
-                    <td>{d.riskLevel ? <SeverityBadge level={d.riskLevel} /> : <span className="text-muted">—</span>}</td>
-                    <td>{d.riskScore != null ? Math.round(d.riskScore) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Card flush>
+            <div className="vuln-findings">
+              {vulnGroups.map((group) => (
+                <div key={group.dependency.id} className="vuln-dep-group">
+                  <div className="vuln-dep-header">
+                    <div className="vuln-dep-name">
+                      <span className="vuln-pkg-name">{group.dependency.name}</span>
+                      <span className="vuln-pkg-version">@{group.dependency.version}</span>
+                      <span className={`pill pill-${group.dependency.type === 'devDependency' ? 'medium' : 'low'} pill-type`}>
+                        {group.dependency.type === 'devDependency' ? 'dev' : 'prod'}
+                      </span>
+                    </div>
+                    <div className="vuln-dep-count">{group.vulnerabilities.length} advisor{group.vulnerabilities.length === 1 ? 'y' : 'ies'}</div>
+                  </div>
+                  <div className="vuln-list">
+                    {group.vulnerabilities.map((v) => <VulnCard key={v.id} vuln={v} />)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
-      </Card>
+      </section>
+
+      {/* ── Dependency table ── */}
+      <section>
+        <div className="section-header">
+          <h2 className="section-title">All dependencies</h2>
+          <span className="tab-badge">{deps.length}</span>
+        </div>
+
+        {deps.length === 0 ? (
+          <Card>
+            <EmptyState
+              title="No dependencies"
+              description="No dependencies were recorded for this scan."
+            />
+          </Card>
+        ) : (
+          <Card flush>
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Package</th>
+                    <th>Version</th>
+                    <th>Type</th>
+                    <th>Risk level</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deps.map((d: any) => (
+                    <tr key={d.id}>
+                      <td className="vuln-pkg-name">{d.name}</td>
+                      <td className="scan-id-cell font-mono">{d.version}</td>
+                      <td>
+                        <span className={`pill pill-${d.type === 'devDependency' ? 'medium' : 'low'} pill-type`}>
+                          {d.type === 'devDependency' ? 'dev' : 'prod'}
+                        </span>
+                      </td>
+                      <td>{d.riskLevel ? <SeverityBadge level={d.riskLevel} /> : <span className="text-muted">—</span>}</td>
+                      <td className="font-mono">{d.riskScore != null ? Math.round(d.riskScore) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+      </section>
     </div>
   );
 }

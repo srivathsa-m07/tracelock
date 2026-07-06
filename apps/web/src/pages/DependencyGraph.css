@@ -1,14 +1,197 @@
-.graph-page { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
-.graph-toolbar { display:flex; justify-content:space-between; align-items:center; }
-.graph-content { display:flex; gap:12px; height: calc(100vh - 160px); }
-.graph-canvas { flex:1; background: #fff; border: 1px solid #e6eef8; border-radius: 6px; min-height: 480px; height: 100%; }
-.graph-sidebar { width: 300px; max-width: 40%; background: #fbfcfd; border: 1px solid #e6eef8; padding:12px; border-radius:6px; overflow:auto; }
-.graph-stats { display:flex; gap:8px; margin-bottom:8px; }
-.stat-card { flex:1; background:#fff; border:1px solid #e6eef8; padding:8px; border-radius:6px; text-align:center; }
-.legend { margin-top:8px; padding:8px; background:#fff; border:1px solid #e6eef8; border-radius:6px; }
-.priority-card { margin-bottom:8px; padding:8px; border-radius:4px; }
-@media (max-width: 800px) {
-  .graph-content { flex-direction: column; height: auto; }
-  .graph-sidebar { width: 100%; max-width: none; }
+/* Dependency Graph page */
+
+.graph-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.graph-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graph-content {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+}
+
+.graph-canvas {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.graph-sidebar {
+  width: 320px;
+  max-width: 40%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.graph-sidebar-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.graph-sidebar-empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.graph-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.legend {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.legend-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.graph-node-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.graph-node-name {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.graph-node-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.graph-node-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.graph-node-meta-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.graph-node-meta-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.graph-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 200px);
+  min-height: 400px;
+}
+
+.priority-card {
+  margin-bottom: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .graph-content {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .graph-sidebar {
+    width: 100%;
+    max-width: none;
+  }
+}
